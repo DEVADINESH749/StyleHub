@@ -9,6 +9,7 @@ class User(Base):
     name = Column(String(100), nullable=False)
     email = Column(String(255), unique=True, index=True, nullable=False)
     password = Column(String(255), nullable=False)
+    role = Column(String(20), default="customer", nullable=False)
 
 
 class Product(Base):
@@ -21,6 +22,7 @@ class Product(Base):
     category = Column(String(100), nullable=False)
     image_url = Column(String(500), nullable=True)
 
+
 class Cart(Base):
     __tablename__ = "cart"
 
@@ -28,6 +30,7 @@ class Cart(Base):
     user_id = Column(Integer, nullable=False)
     product_id = Column(Integer, nullable=False)
     quantity = Column(Integer, nullable=False, default=1)
+
 
 class Order(Base):
     __tablename__ = "orders"

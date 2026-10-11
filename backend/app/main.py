@@ -7,6 +7,7 @@ from .auth import router as auth_router
 from .products import router as products_router
 from .cart import router as cart_router
 from .orders import router as orders_router
+from .admin import router as admin_router
 
 
 Base.metadata.create_all(bind=engine)
@@ -33,6 +34,7 @@ app.include_router(auth_router)
 app.include_router(products_router)
 app.include_router(cart_router)
 app.include_router(orders_router)
+app.include_router(admin_router)
 
 
 @app.get("/")
