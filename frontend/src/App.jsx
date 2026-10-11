@@ -12,7 +12,6 @@ import Footer from "./components/Footer";
 import Checkout from "./components/Checkout";
 import MyOrders from "./components/MyOrders";
 
-
 function App() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +27,6 @@ function App() {
 
   const [loading, setLoading] = useState(false);
 
-
   // ==================================================
   // CHECK EXISTING LOGIN WHEN APPLICATION STARTS
   // ==================================================
@@ -36,11 +34,13 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem("access_token");
 
-    if (token) {
-      checkUserRole(token);
+    if (!token) {
+      return;
     }
-  }, []);
 
+    // Do not keep login screen blocked forever.
+    checkUserRole(token);
+  }, []);
 
   // ==================================================
   // CHECK WHETHER LOGGED-IN USER IS ADMIN
@@ -52,9 +52,10 @@ function App() {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        timeout: 5000,
       });
 
-      if (response.data.role === "admin") {
+      if (response.data?.role === "admin") {
         setIsAdmin(true);
       } else {
         setIsAdmin(false);
@@ -62,41 +63,24 @@ function App() {
 
       setLoggedIn(true);
     } catch (error) {
-      // Normal customers receive 403 from admin endpoint.
-      // They are still valid logged-in users.
+      console.log(
+        "Role check:",
+        error.response?.status || error.message
+      );
 
+      // Normal customers receive 403 from admin endpoint.
       if (error.response?.status === 403) {
         setIsAdmin(false);
         setLoggedIn(true);
         return;
       }
 
-      // Token is invalid or expired.
+      // Any other error means the token may be invalid.
       localStorage.removeItem("access_token");
-
       setLoggedIn(false);
       setIsAdmin(false);
     }
   };
-
-
-  // ==================================================
-  // FILTER PRODUCTS
-  // ==================================================
-
-  const filteredProducts = products
-    .filter((product) =>
-      product.name
-        .toLowerCase()
-        .includes(searchTerm.trim().toLowerCase())
-    )
-    .filter(
-      (product) =>
-        selectedCategory === "All" ||
-        product.category?.toLowerCase() ===
-          selectedCategory.toLowerCase()
-    );
-
 
   // ==================================================
   // LOGIN
@@ -109,64 +93,89 @@ function App() {
     setMessage("");
 
     try {
-      const response = await API.post("/auth/login", {
-        email,
-        password,
-      });
+      const response = await API.post(
+        "/auth/login",
+        {
+          email: email.trim(),
+          password,
+        },
+        {
+          timeout: 10000,
+        }
+      );
 
-      const token = response.data.access_token;
+      const token = response.data?.access_token;
 
-      // Save JWT token
+      if (!token) {
+        throw new Error("Access token was not returned by the server.");
+      }
+
+      // Save JWT
       localStorage.setItem("access_token", token);
 
-      // Check whether this user is admin
+      // Login itself is successful.
+      // Immediately leave the login screen.
+      setLoggedIn(true);
+      setIsAdmin(false);
+
+      setEmail("");
+      setPassword("");
+      setMessage("");
+
+      // Stop the "Signing in..." button immediately.
+      setLoading(false);
+
+      // --------------------------------------------------
+      // Check admin in background.
+      // This must NEVER block customer login.
+      // --------------------------------------------------
+
       try {
         const adminResponse = await API.get("/admin/dashboard", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          timeout: 5000,
         });
 
-        if (adminResponse.data.role === "admin") {
+        if (adminResponse.data?.role === "admin") {
           setIsAdmin(true);
         } else {
           setIsAdmin(false);
         }
       } catch (adminError) {
-        // 403 means normal customer
-        if (adminError.response?.status === 403) {
-          setIsAdmin(false);
-        } else {
-          console.error("Admin check error:", adminError);
-          setIsAdmin(false);
-        }
+        // 403 = normal customer
+        console.log(
+          "Admin check:",
+          adminError.response?.status || adminError.message
+        );
+
+        setIsAdmin(false);
       }
-
-      setLoggedIn(true);
-      setMessage("");
-
-      // Clear login form
-      setEmail("");
-      setPassword("");
-
     } catch (error) {
       console.error("Login error:", error);
 
-      setMessage(
-        error.response?.data?.detail ||
-          "Invalid email or password"
-      );
+      let errorMessage = "Invalid email or password";
+
+      if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.code === "ECONNABORTED") {
+        errorMessage =
+          "Server connection timed out. Please check the backend.";
+      } else if (!error.response) {
+        errorMessage =
+          "Unable to connect to backend. Please start the FastAPI server.";
+      }
 
       localStorage.removeItem("access_token");
 
       setLoggedIn(false);
       setIsAdmin(false);
+      setMessage(errorMessage);
 
-    } finally {
       setLoading(false);
     }
   };
-
 
   // ==================================================
   // LOAD PRODUCTS
@@ -174,14 +183,20 @@ function App() {
 
   const loadProducts = async () => {
     try {
-      const response = await API.get("/products/");
+      const response = await API.get("/products/", {
+        timeout: 10000,
+      });
+
       setProducts(response.data);
     } catch (error) {
       console.error("Products error:", error);
-      setMessage("Unable to load products");
+
+      setMessage(
+        error.response?.data?.detail ||
+          "Unable to load products"
+      );
     }
   };
-
 
   // ==================================================
   // LOAD CART
@@ -199,16 +214,26 @@ function App() {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        timeout: 10000,
       });
 
       setCart(response.data);
-
     } catch (error) {
       console.error("Cart error:", error);
-      setMessage("Unable to load your cart");
+
+      if (error.response?.status === 401) {
+        localStorage.removeItem("access_token");
+        setLoggedIn(false);
+        setIsAdmin(false);
+        return;
+      }
+
+      setMessage(
+        error.response?.data?.detail ||
+          "Unable to load your cart"
+      );
     }
   };
-
 
   // ==================================================
   // LOAD PRODUCTS AND CART FOR CUSTOMERS
@@ -221,6 +246,22 @@ function App() {
     }
   }, [loggedIn, isAdmin]);
 
+  // ==================================================
+  // FILTER PRODUCTS
+  // ==================================================
+
+  const filteredProducts = products
+    .filter((product) =>
+      product.name
+        ?.toLowerCase()
+        .includes(searchTerm.trim().toLowerCase())
+    )
+    .filter(
+      (product) =>
+        selectedCategory === "All" ||
+        product.category?.toLowerCase() ===
+          selectedCategory.toLowerCase()
+    );
 
   // ==================================================
   // ADD PRODUCT TO CART
@@ -245,13 +286,13 @@ function App() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          timeout: 10000,
         }
       );
 
       await loadCart();
 
       setMessage("Product added to cart successfully!");
-
     } catch (error) {
       console.error("Add cart error:", error);
 
@@ -261,7 +302,6 @@ function App() {
       );
     }
   };
-
 
   // ==================================================
   // UPDATE CART QUANTITY
@@ -293,19 +333,19 @@ function App() {
         `/cart/${cartId}`,
         {
           product_id: item.product_id,
-          quantity: quantity,
+          quantity,
         },
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          timeout: 10000,
         }
       );
 
       await loadCart();
 
       setMessage("Cart quantity updated!");
-
     } catch (error) {
       console.error("Update cart error:", error);
 
@@ -315,7 +355,6 @@ function App() {
       );
     }
   };
-
 
   // ==================================================
   // REMOVE PRODUCT FROM CART
@@ -334,12 +373,12 @@ function App() {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        timeout: 10000,
       });
 
       await loadCart();
 
       setMessage("Product removed from cart!");
-
     } catch (error) {
       console.error("Remove cart error:", error);
 
@@ -349,7 +388,6 @@ function App() {
       );
     }
   };
-
 
   // ==================================================
   // LOGOUT
@@ -372,7 +410,6 @@ function App() {
     setMessage("");
   };
 
-
   // ==================================================
   // LOGIN SCREEN
   // ==================================================
@@ -380,13 +417,11 @@ function App() {
   if (!loggedIn) {
     return (
       <div className="min-h-screen bg-gray-950">
-
         <div className="grid min-h-screen lg:grid-cols-2">
 
           {/* Welcome panel */}
 
           <div className="hidden items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-indigo-950 p-10 lg:flex">
-
             <div className="max-w-lg text-white">
 
               <p className="text-sm font-semibold uppercase tracking-[0.3em] text-indigo-400">
@@ -435,20 +470,15 @@ function App() {
                 </div>
 
               </div>
-
             </div>
-
           </div>
 
-
-          {/* Login form panel */}
+          {/* Login form */}
 
           <div className="flex items-center justify-center bg-white px-5 py-12 sm:px-8">
-
             <div className="w-full max-w-md">
 
               <div className="mb-10 text-center lg:hidden">
-
                 <h1 className="text-3xl font-bold tracking-tight text-gray-900">
                   STYLE<span className="text-indigo-600">HUB</span>
                 </h1>
@@ -456,9 +486,7 @@ function App() {
                 <p className="mt-2 text-sm text-gray-500">
                   Fashion made simple
                 </p>
-
               </div>
-
 
               <p className="text-sm font-semibold uppercase tracking-wider text-indigo-600">
                 Welcome back
@@ -472,14 +500,12 @@ function App() {
                 Enter your details to continue shopping with StyleHub.
               </p>
 
-
               <form
                 onSubmit={handleLogin}
                 className="mt-8 space-y-5"
               >
 
                 <div>
-
                   <label
                     htmlFor="login-email"
                     className="mb-2 block text-sm font-medium text-gray-700"
@@ -499,12 +525,9 @@ function App() {
                     required
                     className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                   />
-
                 </div>
 
-
                 <div>
-
                   <label
                     htmlFor="login-password"
                     className="mb-2 block text-sm font-medium text-gray-700"
@@ -524,22 +547,16 @@ function App() {
                     required
                     className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                   />
-
                 </div>
-
 
                 <button
                   type="submit"
                   disabled={loading}
                   className="w-full rounded-xl bg-gray-950 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {loading
-                    ? "Signing in..."
-                    : "Sign In"}
+                  {loading ? "Signing in..." : "Sign In"}
                 </button>
-
               </form>
-
 
               {message && (
                 <div
@@ -550,33 +567,43 @@ function App() {
                 </div>
               )}
 
-
               <div className="mt-8 rounded-xl bg-gray-50 p-4">
-
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                  Demo account
+                  Demo Accounts
                 </p>
 
-                <p className="mt-2 text-sm text-gray-700">
+                <p className="mt-2 text-sm font-medium text-gray-700">
+                  Customer
+                </p>
+
+                <p className="text-sm text-gray-700">
+                  customer@stylehub.com
+                </p>
+
+                <p className="text-sm text-gray-700">
+                  Customer@123
+                </p>
+
+                <p className="mt-3 text-sm font-medium text-gray-700">
+                  Admin
+                </p>
+
+                <p className="text-sm text-gray-700">
                   deva@example.com
                 </p>
 
                 <p className="text-sm text-gray-700">
                   Test@123
                 </p>
-
               </div>
 
             </div>
-
           </div>
 
         </div>
-
       </div>
     );
   }
-
 
   // ==================================================
   // ADMIN DASHBOARD
@@ -585,7 +612,6 @@ function App() {
   if (isAdmin) {
     return <AdminDashboard />;
   }
-
 
   // ==================================================
   // CUSTOMER SHOP
@@ -601,27 +627,21 @@ function App() {
 
       <Navbar cartCount={cart.length} />
 
-
       {/* HERO */}
 
       <Hero />
-
 
       {/* MAIN CONTENT */}
 
       <main className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
 
-
-        {/* ==================================================
-            PRODUCTS SECTION
-        ================================================== */}
+        {/* PRODUCTS */}
 
         <section id="products">
 
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 
             <div>
-
               <p className="text-sm font-semibold uppercase tracking-wider text-indigo-600">
                 Our Collection
               </p>
@@ -634,9 +654,7 @@ function App() {
                 Explore our latest fashion collection and find
                 something that fits your style.
               </p>
-
             </div>
-
 
             <button
               type="button"
@@ -651,10 +669,7 @@ function App() {
 
           </div>
 
-
-          {/* ==================================================
-              SEARCH AND CATEGORIES
-          ================================================== */}
+          {/* SEARCH / CATEGORIES */}
 
           <section
             id="categories"
@@ -679,7 +694,6 @@ function App() {
               className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 sm:max-w-md"
             />
 
-
             <div className="flex flex-wrap gap-3">
 
               {[
@@ -687,6 +701,7 @@ function App() {
                 "Men",
                 "Women",
                 "Accessories",
+                "Footwear",
               ].map((category) => (
 
                 <button
@@ -711,7 +726,6 @@ function App() {
 
             </div>
 
-
             <p className="text-sm text-gray-500">
               Showing {filteredProducts.length} of{" "}
               {products.length} products
@@ -719,10 +733,7 @@ function App() {
 
           </section>
 
-
-          {/* ==================================================
-              PRODUCT GRID
-          ================================================== */}
+          {/* PRODUCT GRID */}
 
           {products.length === 0 ? (
 
@@ -789,10 +800,7 @@ function App() {
 
           )}
 
-
-          {/* ==================================================
-              NOTIFICATION
-          ================================================== */}
+          {/* NOTIFICATION */}
 
           {message && (
             <div
@@ -803,29 +811,25 @@ function App() {
             </div>
           )}
 
+          {/* CART */}
 
-          {/* ==================================================
-              CART
-          ================================================== */}
+          <section
+            id="cart"
+            className="scroll-mt-24"
+          >
+            <Cart
+              cart={cart}
+              products={products}
+              onUpdateQuantity={updateCartQuantity}
+              onRemoveItem={removeCartItem}
+            />
+          </section>
 
-          <Cart
-            cart={cart}
-            products={products}
-            onUpdateQuantity={updateCartQuantity}
-            onRemoveItem={removeCartItem}
-          />
-
-
-          {/* ==================================================
-              CHECKOUT
-          ================================================== */}
+          {/* CHECKOUT */}
 
           <Checkout cart={cart} />
 
-
-          {/* ==================================================
-              ORDERS
-          ================================================== */}
+          {/* ORDERS */}
 
           <section
             id="orders"
@@ -834,10 +838,7 @@ function App() {
             <MyOrders />
           </section>
 
-
-          {/* ==================================================
-              LOGOUT
-          ================================================== */}
+          {/* LOGOUT */}
 
           <div className="mt-12 flex justify-center">
 
@@ -852,9 +853,7 @@ function App() {
           </div>
 
         </section>
-
       </main>
-
 
       {/* FOOTER */}
 
@@ -863,6 +862,5 @@ function App() {
     </div>
   );
 }
-
 
 export default App;
