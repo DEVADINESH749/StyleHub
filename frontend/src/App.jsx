@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import React from "react";
+
 import API from "./api";
+
 import AdminDashboard from "./pages/AdminDashboard";
 
 import Navbar from "./components/Navbar";
@@ -10,6 +11,7 @@ import Cart from "./components/Cart";
 import Footer from "./components/Footer";
 import Checkout from "./components/Checkout";
 import MyOrders from "./components/MyOrders";
+
 
 function App() {
   const [email, setEmail] = useState("");
@@ -26,9 +28,10 @@ function App() {
 
   const [loading, setLoading] = useState(false);
 
-  // --------------------------------------------------
-  // Check existing login when application starts
-  // --------------------------------------------------
+
+  // ==================================================
+  // CHECK EXISTING LOGIN WHEN APPLICATION STARTS
+  // ==================================================
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
@@ -38,9 +41,10 @@ function App() {
     }
   }, []);
 
-  // --------------------------------------------------
-  // Check whether logged-in user is admin
-  // --------------------------------------------------
+
+  // ==================================================
+  // CHECK WHETHER LOGGED-IN USER IS ADMIN
+  // ==================================================
 
   const checkUserRole = async (token) => {
     try {
@@ -58,7 +62,7 @@ function App() {
 
       setLoggedIn(true);
     } catch (error) {
-      // Normal customers will receive 403 here.
+      // Normal customers receive 403 from admin endpoint.
       // They are still valid logged-in users.
 
       if (error.response?.status === 403) {
@@ -67,7 +71,7 @@ function App() {
         return;
       }
 
-      // Token is invalid/expired.
+      // Token is invalid or expired.
       localStorage.removeItem("access_token");
 
       setLoggedIn(false);
@@ -75,9 +79,10 @@ function App() {
     }
   };
 
-  // --------------------------------------------------
-  // Filter products
-  // --------------------------------------------------
+
+  // ==================================================
+  // FILTER PRODUCTS
+  // ==================================================
 
   const filteredProducts = products
     .filter((product) =>
@@ -92,9 +97,10 @@ function App() {
           selectedCategory.toLowerCase()
     );
 
-  // --------------------------------------------------
-  // Login
-  // --------------------------------------------------
+
+  // ==================================================
+  // LOGIN
+  // ==================================================
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -142,6 +148,7 @@ function App() {
       // Clear login form
       setEmail("");
       setPassword("");
+
     } catch (error) {
       console.error("Login error:", error);
 
@@ -154,14 +161,16 @@ function App() {
 
       setLoggedIn(false);
       setIsAdmin(false);
+
     } finally {
       setLoading(false);
     }
   };
 
-  // --------------------------------------------------
-  // Load products
-  // --------------------------------------------------
+
+  // ==================================================
+  // LOAD PRODUCTS
+  // ==================================================
 
   const loadProducts = async () => {
     try {
@@ -173,9 +182,10 @@ function App() {
     }
   };
 
-  // --------------------------------------------------
-  // Load cart
-  // --------------------------------------------------
+
+  // ==================================================
+  // LOAD CART
+  // ==================================================
 
   const loadCart = async () => {
     try {
@@ -192,15 +202,17 @@ function App() {
       });
 
       setCart(response.data);
+
     } catch (error) {
       console.error("Cart error:", error);
       setMessage("Unable to load your cart");
     }
   };
 
-  // --------------------------------------------------
-  // Load products and cart for normal customers
-  // --------------------------------------------------
+
+  // ==================================================
+  // LOAD PRODUCTS AND CART FOR CUSTOMERS
+  // ==================================================
 
   useEffect(() => {
     if (loggedIn && !isAdmin) {
@@ -209,9 +221,10 @@ function App() {
     }
   }, [loggedIn, isAdmin]);
 
-  // --------------------------------------------------
-  // Add product to cart
-  // --------------------------------------------------
+
+  // ==================================================
+  // ADD PRODUCT TO CART
+  // ==================================================
 
   const addToCart = async (productId) => {
     try {
@@ -238,6 +251,7 @@ function App() {
       await loadCart();
 
       setMessage("Product added to cart successfully!");
+
     } catch (error) {
       console.error("Add cart error:", error);
 
@@ -248,9 +262,10 @@ function App() {
     }
   };
 
-  // --------------------------------------------------
-  // Update cart quantity
-  // --------------------------------------------------
+
+  // ==================================================
+  // UPDATE CART QUANTITY
+  // ==================================================
 
   const updateCartQuantity = async (cartId, quantity) => {
     try {
@@ -290,6 +305,7 @@ function App() {
       await loadCart();
 
       setMessage("Cart quantity updated!");
+
     } catch (error) {
       console.error("Update cart error:", error);
 
@@ -300,9 +316,10 @@ function App() {
     }
   };
 
-  // --------------------------------------------------
-  // Remove product from cart
-  // --------------------------------------------------
+
+  // ==================================================
+  // REMOVE PRODUCT FROM CART
+  // ==================================================
 
   const removeCartItem = async (cartId) => {
     try {
@@ -322,6 +339,7 @@ function App() {
       await loadCart();
 
       setMessage("Product removed from cart!");
+
     } catch (error) {
       console.error("Remove cart error:", error);
 
@@ -332,9 +350,10 @@ function App() {
     }
   };
 
-  // --------------------------------------------------
-  // Logout
-  // --------------------------------------------------
+
+  // ==================================================
+  // LOGOUT
+  // ==================================================
 
   const handleLogout = () => {
     localStorage.removeItem("access_token");
@@ -353,18 +372,21 @@ function App() {
     setMessage("");
   };
 
-  // --------------------------------------------------
-  // Login screen
-  // --------------------------------------------------
+
+  // ==================================================
+  // LOGIN SCREEN
+  // ==================================================
 
   if (!loggedIn) {
     return (
       <div className="min-h-screen bg-gray-950">
+
         <div className="grid min-h-screen lg:grid-cols-2">
 
           {/* Welcome panel */}
 
           <div className="hidden items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-indigo-950 p-10 lg:flex">
+
             <div className="max-w-lg text-white">
 
               <p className="text-sm font-semibold uppercase tracking-[0.3em] text-indigo-400">
@@ -413,12 +435,16 @@ function App() {
                 </div>
 
               </div>
+
             </div>
+
           </div>
+
 
           {/* Login form panel */}
 
           <div className="flex items-center justify-center bg-white px-5 py-12 sm:px-8">
+
             <div className="w-full max-w-md">
 
               <div className="mb-10 text-center lg:hidden">
@@ -433,6 +459,7 @@ function App() {
 
               </div>
 
+
               <p className="text-sm font-semibold uppercase tracking-wider text-indigo-600">
                 Welcome back
               </p>
@@ -444,6 +471,7 @@ function App() {
               <p className="mt-3 text-sm leading-6 text-gray-500">
                 Enter your details to continue shopping with StyleHub.
               </p>
+
 
               <form
                 onSubmit={handleLogin}
@@ -474,6 +502,7 @@ function App() {
 
                 </div>
 
+
                 <div>
 
                   <label
@@ -498,6 +527,7 @@ function App() {
 
                 </div>
 
+
                 <button
                   type="submit"
                   disabled={loading}
@@ -510,6 +540,7 @@ function App() {
 
               </form>
 
+
               {message && (
                 <div
                   role="alert"
@@ -518,6 +549,7 @@ function App() {
                   {message}
                 </div>
               )}
+
 
               <div className="mt-8 rounded-xl bg-gray-50 p-4">
 
@@ -536,171 +568,75 @@ function App() {
               </div>
 
             </div>
+
           </div>
 
         </div>
+
       </div>
     );
   }
 
-  // --------------------------------------------------
+
+  // ==================================================
   // ADMIN DASHBOARD
-  // --------------------------------------------------
+  // ==================================================
 
   if (isAdmin) {
-    return (
-      <AdminDashboard />
-    );
+    return <AdminDashboard />;
   }
 
-  // --------------------------------------------------
+
+  // ==================================================
   // CUSTOMER SHOP
-  // --------------------------------------------------
+  // ==================================================
 
   return (
-    <div className="min-h-screen bg-white text-gray-900">
+    <div
+      id="home"
+      className="min-h-screen bg-white text-gray-900"
+    >
+
+      {/* NAVBAR */}
 
       <Navbar cartCount={cart.length} />
 
+
+      {/* HERO */}
+
       <Hero />
+
+
+      {/* MAIN CONTENT */}
 
       <main className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
 
-        {/* Products heading */}
 
-        <div
-          id="products"
-          className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
-        >
+        {/* ==================================================
+            PRODUCTS SECTION
+        ================================================== */}
 
-          <div>
+        <section id="products">
 
-            <p className="text-sm font-semibold uppercase tracking-wider text-indigo-600">
-              Our Collection
-            </p>
+          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 
-            <h2 className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Trending Products
-            </h2>
+            <div>
 
-            <p className="mt-2 max-w-xl text-sm leading-6 text-gray-500">
-              Explore our latest fashion collection and find
-              something that fits your style.
-            </p>
+              <p className="text-sm font-semibold uppercase tracking-wider text-indigo-600">
+                Our Collection
+              </p>
 
-          </div>
+              <h2 className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+                Trending Products
+              </h2>
 
-          <button
-            type="button"
-            onClick={() => {
-              setSearchTerm("");
-              setSelectedCategory("All");
-            }}
-            className="self-start rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:border-indigo-500 hover:text-indigo-600 sm:self-auto"
-          >
-            View All
-          </button>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-gray-500">
+                Explore our latest fashion collection and find
+                something that fits your style.
+              </p>
 
-        </div>
-
-        {/* Search and category filters */}
-
-        <div
-          id="categories"
-          className="mb-8 space-y-5"
-        >
-
-          <label
-            htmlFor="product-search"
-            className="sr-only"
-          >
-            Search products
-          </label>
-
-          <input
-            id="product-search"
-            type="search"
-            placeholder="Search products by name..."
-            value={searchTerm}
-            onChange={(e) =>
-              setSearchTerm(e.target.value)
-            }
-            className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 sm:max-w-md"
-          />
-
-          <div className="flex flex-wrap gap-3">
-
-            {[
-              "All",
-              "Men",
-              "Women",
-              "Accessories",
-            ].map((category) => (
-
-              <button
-                key={category}
-                type="button"
-                aria-pressed={
-                  selectedCategory === category
-                }
-                onClick={() =>
-                  setSelectedCategory(category)
-                }
-                className={`rounded-full px-5 py-2 text-sm font-semibold transition ${
-                  selectedCategory === category
-                    ? "bg-indigo-600 text-white"
-                    : "border border-gray-300 bg-white text-gray-700 hover:border-indigo-500 hover:text-indigo-600"
-                }`}
-              >
-                {category}
-              </button>
-
-            ))}
-
-          </div>
-
-          <p className="text-sm text-gray-500">
-            Showing {filteredProducts.length} of{" "}
-            {products.length} products
-          </p>
-
-        </div>
-
-        {/* Product grid */}
-
-        {products.length === 0 ? (
-
-          <div className="rounded-2xl border border-dashed border-gray-300 px-6 py-16 text-center">
-
-            <div className="text-5xl">
-              🛍️
             </div>
 
-            <h3 className="mt-4 text-lg font-semibold text-gray-900">
-              No products available
-            </h3>
-
-            <p className="mt-2 text-sm text-gray-500">
-              Products will appear here once they are added.
-            </p>
-
-          </div>
-
-        ) : filteredProducts.length === 0 ? (
-
-          <div className="rounded-2xl border border-dashed border-gray-300 px-6 py-16 text-center">
-
-            <div className="text-5xl">
-              🔍
-            </div>
-
-            <h3 className="mt-4 text-lg font-semibold text-gray-900">
-              No products found
-            </h3>
-
-            <p className="mt-2 text-sm text-gray-500">
-              Try another search term or select a different category.
-            </p>
 
             <button
               type="button"
@@ -708,79 +644,225 @@ function App() {
                 setSearchTerm("");
                 setSelectedCategory("All");
               }}
-              className="mt-5 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-500"
+              className="self-start rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:border-indigo-500 hover:text-indigo-600 sm:self-auto"
             >
-              Clear Filters
+              View All
             </button>
 
           </div>
 
-        ) : (
 
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {/* ==================================================
+              SEARCH AND CATEGORIES
+          ================================================== */}
 
-            {filteredProducts.map((product) => (
+          <section
+            id="categories"
+            className="mb-8 space-y-5"
+          >
 
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={addToCart}
-              />
+            <label
+              htmlFor="product-search"
+              className="sr-only"
+            >
+              Search products
+            </label>
 
-            ))}
+            <input
+              id="product-search"
+              type="search"
+              placeholder="Search products by name..."
+              value={searchTerm}
+              onChange={(e) =>
+                setSearchTerm(e.target.value)
+              }
+              className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 sm:max-w-md"
+            />
+
+
+            <div className="flex flex-wrap gap-3">
+
+              {[
+                "All",
+                "Men",
+                "Women",
+                "Accessories",
+              ].map((category) => (
+
+                <button
+                  key={category}
+                  type="button"
+                  aria-pressed={
+                    selectedCategory === category
+                  }
+                  onClick={() =>
+                    setSelectedCategory(category)
+                  }
+                  className={`rounded-full px-5 py-2 text-sm font-semibold transition ${
+                    selectedCategory === category
+                      ? "bg-indigo-600 text-white"
+                      : "border border-gray-300 bg-white text-gray-700 hover:border-indigo-500 hover:text-indigo-600"
+                  }`}
+                >
+                  {category}
+                </button>
+
+              ))}
+
+            </div>
+
+
+            <p className="text-sm text-gray-500">
+              Showing {filteredProducts.length} of{" "}
+              {products.length} products
+            </p>
+
+          </section>
+
+
+          {/* ==================================================
+              PRODUCT GRID
+          ================================================== */}
+
+          {products.length === 0 ? (
+
+            <div className="rounded-2xl border border-dashed border-gray-300 px-6 py-16 text-center">
+
+              <div className="text-5xl">
+                🛍️
+              </div>
+
+              <h3 className="mt-4 text-lg font-semibold text-gray-900">
+                No products available
+              </h3>
+
+              <p className="mt-2 text-sm text-gray-500">
+                Products will appear here once they are added.
+              </p>
+
+            </div>
+
+          ) : filteredProducts.length === 0 ? (
+
+            <div className="rounded-2xl border border-dashed border-gray-300 px-6 py-16 text-center">
+
+              <div className="text-5xl">
+                🔍
+              </div>
+
+              <h3 className="mt-4 text-lg font-semibold text-gray-900">
+                No products found
+              </h3>
+
+              <p className="mt-2 text-sm text-gray-500">
+                Try another search term or select a different category.
+              </p>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchTerm("");
+                  setSelectedCategory("All");
+                }}
+                className="mt-5 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-500"
+              >
+                Clear Filters
+              </button>
+
+            </div>
+
+          ) : (
+
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+
+              {filteredProducts.map((product) => (
+
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onAddToCart={addToCart}
+                />
+
+              ))}
+
+            </div>
+
+          )}
+
+
+          {/* ==================================================
+              NOTIFICATION
+          ================================================== */}
+
+          {message && (
+            <div
+              role="status"
+              className="fixed bottom-5 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-xl bg-gray-950 px-5 py-3 text-center text-sm font-medium text-white shadow-xl"
+            >
+              {message}
+            </div>
+          )}
+
+
+          {/* ==================================================
+              CART
+          ================================================== */}
+
+          <Cart
+            cart={cart}
+            products={products}
+            onUpdateQuantity={updateCartQuantity}
+            onRemoveItem={removeCartItem}
+          />
+
+
+          {/* ==================================================
+              CHECKOUT
+          ================================================== */}
+
+          <Checkout cart={cart} />
+
+
+          {/* ==================================================
+              ORDERS
+          ================================================== */}
+
+          <section
+            id="orders"
+            className="scroll-mt-24"
+          >
+            <MyOrders />
+          </section>
+
+
+          {/* ==================================================
+              LOGOUT
+          ================================================== */}
+
+          <div className="mt-12 flex justify-center">
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-xl border border-gray-300 px-5 py-3 text-sm font-semibold text-gray-700 transition hover:border-red-500 hover:text-red-600"
+            >
+              Sign Out
+            </button>
 
           </div>
 
-        )}
-
-        {/* Notification */}
-
-        {message && (
-          <div
-            role="status"
-            className="fixed bottom-5 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-xl bg-gray-950 px-5 py-3 text-center text-sm font-medium text-white shadow-xl"
-          >
-            {message}
-          </div>
-        )}
-
-        {/* Cart */}
-
-        <Cart
-          cart={cart}
-          products={products}
-          onUpdateQuantity={updateCartQuantity}
-          onRemoveItem={removeCartItem}
-        />
-
-        {/* Checkout */}
-
-        <Checkout cart={cart} />
-
-        {/* My Orders */}
-
-        <MyOrders />
-
-        {/* Logout */}
-
-        <div className="mt-12 flex justify-center">
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="rounded-xl border border-gray-300 px-5 py-3 text-sm font-semibold text-gray-700 transition hover:border-red-500 hover:text-red-600"
-          >
-            Sign Out
-          </button>
-
-        </div>
+        </section>
 
       </main>
+
+
+      {/* FOOTER */}
 
       <Footer />
 
     </div>
   );
 }
+
 
 export default App;
