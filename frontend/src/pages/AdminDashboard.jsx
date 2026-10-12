@@ -18,35 +18,9 @@ function AdminDashboard() {
     image_url: "",
   });
 
-const handleLogout = () => {
-  localStorage.removeItem("access_token");
-  window.location.href = "/";
-};
-
-<button
-  type="button"
-  onClick={handleLogout}
-  className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:border-red-500 hover:text-red-600"
->
-  Sign Out
-</button>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  // ==================================================
+  // AUTH CONFIG
+  // ==================================================
 
   const token = localStorage.getItem("access_token");
 
@@ -55,6 +29,19 @@ const handleLogout = () => {
       Authorization: `Bearer ${token}`,
     },
   };
+
+  // ==================================================
+  // ADMIN LOGOUT
+  // ==================================================
+
+  const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    window.location.href = "/";
+  };
+
+  // ==================================================
+  // LOAD ADMIN DATA
+  // ==================================================
 
   useEffect(() => {
     fetchAdminData();
@@ -71,19 +58,32 @@ const handleLogout = () => {
       setProducts(productsResponse.data);
     } catch (error) {
       console.error("Admin data error:", error);
+
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        localStorage.removeItem("access_token");
+        window.location.href = "/";
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  // ==================================================
+  // FORM INPUT
+  // ==================================================
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
-    setForm({
-      ...form,
+    setForm((previousForm) => ({
+      ...previousForm,
       [name]: value,
-    });
+    }));
   };
+
+  // ==================================================
+  // RESET FORM
+  // ==================================================
 
   const resetForm = () => {
     setForm({
@@ -97,6 +97,10 @@ const handleLogout = () => {
     setEditingProduct(null);
   };
 
+  // ==================================================
+  // ADD / UPDATE PRODUCT
+  // ==================================================
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -109,11 +113,11 @@ const handleLogout = () => {
       setSaving(true);
 
       const productData = {
-        name: form.name,
-        description: form.description,
+        name: form.name.trim(),
+        description: form.description.trim(),
         price: Number(form.price),
         category: form.category,
-        image_url: form.image_url,
+        image_url: form.image_url.trim(),
       };
 
       if (editingProduct) {
@@ -148,13 +152,17 @@ const handleLogout = () => {
     }
   };
 
+  // ==================================================
+  // EDIT PRODUCT
+  // ==================================================
+
   const handleEdit = (product) => {
     setEditingProduct(product);
 
     setForm({
       name: product.name || "",
       description: product.description || "",
-      price: product.price || "",
+      price: product.price ?? "",
       category: product.category || "",
       image_url: product.image_url || "",
     });
@@ -164,6 +172,10 @@ const handleLogout = () => {
       behavior: "smooth",
     });
   };
+
+  // ==================================================
+  // DELETE PRODUCT
+  // ==================================================
 
   const handleDelete = async (productId) => {
     const confirmed = window.confirm(
@@ -182,6 +194,10 @@ const handleLogout = () => {
 
       alert("Product deleted successfully.");
 
+      if (editingProduct?.id === productId) {
+        resetForm();
+      }
+
       await fetchAdminData();
     } catch (error) {
       console.error("Product delete error:", error);
@@ -193,15 +209,23 @@ const handleLogout = () => {
     }
   };
 
+  // ==================================================
+  // LOADING
+  // ==================================================
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <h2 className="text-xl font-semibold">
+      <div className="flex min-h-screen items-center justify-center bg-gray-100">
+        <h2 className="text-xl font-semibold text-gray-800">
           Loading Admin Dashboard...
         </h2>
       </div>
     );
   }
+
+  // ==================================================
+  // STATISTICS
+  // ==================================================
 
   const paidOrders = orders.filter(
     (order) => order.status === "Paid"
@@ -219,74 +243,107 @@ const handleLogout = () => {
       0
     );
 
+  // ==================================================
+  // DASHBOARD
+  // ==================================================
+
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-100 p-4 sm:p-6">
+      <div className="mx-auto max-w-7xl">
 
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">
-            StyleHub Admin Dashboard
-          </h1>
+        {/* ==================================================
+            HEADER
+        ================================================== */}
 
-          <p className="text-gray-600 mt-2">
-            Manage products and monitor customer orders.
-          </p>
+        <div className="mb-8 flex flex-col gap-4 rounded-xl bg-white p-6 shadow sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">
+              StyleHub Admin Dashboard
+            </h1>
+
+            <p className="mt-2 text-gray-600">
+              Manage products and monitor customer orders.
+            </p>
+          </div>
+
+          {/* LOGOUT BUTTON */}
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 transition hover:border-red-500 hover:bg-red-50 hover:text-red-600"
+          >
+            Sign Out
+          </button>
         </div>
 
-        {/* Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
+        {/* ==================================================
+            STATISTICS
+        ================================================== */}
 
-          <div className="bg-white rounded-xl shadow p-5">
+        <div className="mb-8 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
+
+          {/* TOTAL PRODUCTS */}
+
+          <div className="rounded-xl bg-white p-5 shadow">
             <p className="text-gray-500">
               Total Products
             </p>
 
-            <h2 className="text-3xl font-bold mt-2">
+            <h2 className="mt-2 text-3xl font-bold text-gray-900">
               {products.length}
             </h2>
           </div>
 
-          <div className="bg-white rounded-xl shadow p-5">
+          {/* TOTAL ORDERS */}
+
+          <div className="rounded-xl bg-white p-5 shadow">
             <p className="text-gray-500">
               Total Orders
             </p>
 
-            <h2 className="text-3xl font-bold mt-2">
+            <h2 className="mt-2 text-3xl font-bold text-gray-900">
               {orders.length}
             </h2>
           </div>
 
-          <div className="bg-white rounded-xl shadow p-5">
+          {/* PAID ORDERS */}
+
+          <div className="rounded-xl bg-white p-5 shadow">
             <p className="text-gray-500">
               Paid Orders
             </p>
 
-            <h2 className="text-3xl font-bold mt-2">
+            <h2 className="mt-2 text-3xl font-bold text-gray-900">
               {paidOrders}
             </h2>
 
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="mt-1 text-sm text-gray-500">
               Pending: {pendingOrders}
             </p>
           </div>
 
-          <div className="bg-white rounded-xl shadow p-5">
+          {/* REVENUE */}
+
+          <div className="rounded-xl bg-white p-5 shadow">
             <p className="text-gray-500">
               Revenue
             </p>
 
-            <h2 className="text-3xl font-bold mt-2">
-              ₹{totalRevenue.toLocaleString()}
+            <h2 className="mt-2 text-3xl font-bold text-gray-900">
+              ₹{totalRevenue.toLocaleString("en-IN")}
             </h2>
           </div>
 
         </div>
 
-        {/* Add / Edit Product */}
-        <div className="bg-white rounded-xl shadow mb-8">
+        {/* ==================================================
+            ADD / EDIT PRODUCT
+        ================================================== */}
 
-          <div className="p-5 border-b">
+        <div className="mb-8 rounded-xl bg-white shadow">
+
+          <div className="border-b p-5">
             <h2 className="text-xl font-bold text-gray-800">
               {editingProduct
                 ? "Edit Product"
@@ -299,11 +356,12 @@ const handleLogout = () => {
             className="p-5"
           >
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
 
-              {/* Name */}
+              {/* NAME */}
+
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="mb-2 block text-sm font-medium">
                   Product Name
                 </label>
 
@@ -313,13 +371,15 @@ const handleLogout = () => {
                   value={form.name}
                   onChange={handleInputChange}
                   placeholder="Enter product name"
-                  className="w-full border rounded-lg px-4 py-2"
+                  required
+                  className="w-full rounded-lg border px-4 py-2 outline-none focus:border-indigo-500"
                 />
               </div>
 
-              {/* Category */}
+              {/* CATEGORY */}
+
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="mb-2 block text-sm font-medium">
                   Category
                 </label>
 
@@ -327,7 +387,8 @@ const handleLogout = () => {
                   name="category"
                   value={form.category}
                   onChange={handleInputChange}
-                  className="w-full border rounded-lg px-4 py-2"
+                  required
+                  className="w-full rounded-lg border px-4 py-2 outline-none focus:border-indigo-500"
                 >
                   <option value="">
                     Select category
@@ -351,9 +412,10 @@ const handleLogout = () => {
                 </select>
               </div>
 
-              {/* Price */}
+              {/* PRICE */}
+
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="mb-2 block text-sm font-medium">
                   Price
                 </label>
 
@@ -364,13 +426,16 @@ const handleLogout = () => {
                   onChange={handleInputChange}
                   placeholder="Enter price"
                   min="0"
-                  className="w-full border rounded-lg px-4 py-2"
+                  step="0.01"
+                  required
+                  className="w-full rounded-lg border px-4 py-2 outline-none focus:border-indigo-500"
                 />
               </div>
 
-              {/* Image URL */}
+              {/* IMAGE URL */}
+
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="mb-2 block text-sm font-medium">
                   Image URL
                 </label>
 
@@ -380,14 +445,14 @@ const handleLogout = () => {
                   value={form.image_url}
                   onChange={handleInputChange}
                   placeholder="Enter image URL"
-                  className="w-full border rounded-lg px-4 py-2"
+                  className="w-full rounded-lg border px-4 py-2 outline-none focus:border-indigo-500"
                 />
               </div>
 
-              {/* Description */}
-              <div className="md:col-span-2">
+              {/* DESCRIPTION */}
 
-                <label className="block text-sm font-medium mb-2">
+              <div className="md:col-span-2">
+                <label className="mb-2 block text-sm font-medium">
                   Description
                 </label>
 
@@ -397,20 +462,20 @@ const handleLogout = () => {
                   onChange={handleInputChange}
                   placeholder="Enter product description"
                   rows="3"
-                  className="w-full border rounded-lg px-4 py-2"
+                  className="w-full rounded-lg border px-4 py-2 outline-none focus:border-indigo-500"
                 />
-
               </div>
 
             </div>
 
-            {/* Buttons */}
-            <div className="flex gap-3 mt-5">
+            {/* BUTTONS */}
+
+            <div className="mt-5 flex flex-wrap gap-3">
 
               <button
                 type="submit"
                 disabled={saving}
-                className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 disabled:opacity-50"
+                className="rounded-lg bg-black px-6 py-2 text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {saving
                   ? "Saving..."
@@ -423,7 +488,7 @@ const handleLogout = () => {
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300"
+                  className="rounded-lg bg-gray-200 px-6 py-2 text-gray-800 transition hover:bg-gray-300"
                 >
                   Cancel Edit
                 </button>
@@ -434,10 +499,13 @@ const handleLogout = () => {
           </form>
         </div>
 
-        {/* Orders */}
-        <div className="bg-white rounded-xl shadow mb-8">
+        {/* ==================================================
+            ORDERS
+        ================================================== */}
 
-          <div className="p-5 border-b">
+        <div className="mb-8 rounded-xl bg-white shadow">
+
+          <div className="border-b p-5">
             <h2 className="text-xl font-bold text-gray-800">
               Recent Orders
             </h2>
@@ -448,68 +516,77 @@ const handleLogout = () => {
             <table className="w-full">
 
               <thead className="bg-gray-50">
-
                 <tr>
-                  <th className="text-left p-4">
+
+                  <th className="p-4 text-left">
                     Order ID
                   </th>
 
-                  <th className="text-left p-4">
+                  <th className="p-4 text-left">
                     User ID
                   </th>
 
-                  <th className="text-left p-4">
+                  <th className="p-4 text-left">
                     Amount
                   </th>
 
-                  <th className="text-left p-4">
+                  <th className="p-4 text-left">
                     Status
                   </th>
-                </tr>
 
+                </tr>
               </thead>
 
               <tbody>
 
-                {orders.map((order) => (
-
-                  <tr
-                    key={order.id}
-                    className="border-t"
-                  >
-
-                    <td className="p-4">
-                      #{order.id}
+                {orders.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan="4"
+                      className="p-6 text-center text-gray-500"
+                    >
+                      No orders found.
                     </td>
-
-                    <td className="p-4">
-                      {order.user_id}
-                    </td>
-
-                    <td className="p-4">
-                      ₹
-                      {Number(
-                        order.total_amount
-                      ).toLocaleString()}
-                    </td>
-
-                    <td className="p-4">
-
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm ${
-                          order.status === "Paid"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-yellow-100 text-yellow-700"
-                        }`}
-                      >
-                        {order.status}
-                      </span>
-
-                    </td>
-
                   </tr>
+                ) : (
+                  orders.map((order) => (
+                    <tr
+                      key={order.id}
+                      className="border-t"
+                    >
 
-                ))}
+                      <td className="p-4">
+                        #{order.id}
+                      </td>
+
+                      <td className="p-4">
+                        {order.user_id}
+                      </td>
+
+                      <td className="p-4">
+                        ₹
+                        {Number(
+                          order.total_amount
+                        ).toLocaleString("en-IN")}
+                      </td>
+
+                      <td className="p-4">
+
+                        <span
+                          className={`rounded-full px-3 py-1 text-sm ${
+                            order.status === "Paid"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-yellow-100 text-yellow-700"
+                          }`}
+                        >
+                          {order.status}
+                        </span>
+
+                      </td>
+
+                    </tr>
+                  ))
+                )}
 
               </tbody>
 
@@ -518,10 +595,13 @@ const handleLogout = () => {
           </div>
         </div>
 
-        {/* Products */}
-        <div className="bg-white rounded-xl shadow">
+        {/* ==================================================
+            PRODUCTS
+        ================================================== */}
 
-          <div className="p-5 border-b">
+        <div className="rounded-xl bg-white shadow">
+
+          <div className="border-b p-5">
             <h2 className="text-xl font-bold text-gray-800">
               Products ({products.length})
             </h2>
@@ -532,90 +612,99 @@ const handleLogout = () => {
             <table className="w-full">
 
               <thead className="bg-gray-50">
-
                 <tr>
 
-                  <th className="text-left p-4">
+                  <th className="p-4 text-left">
                     ID
                   </th>
 
-                  <th className="text-left p-4">
+                  <th className="p-4 text-left">
                     Product
                   </th>
 
-                  <th className="text-left p-4">
+                  <th className="p-4 text-left">
                     Category
                   </th>
 
-                  <th className="text-left p-4">
+                  <th className="p-4 text-left">
                     Price
                   </th>
 
-                  <th className="text-left p-4">
+                  <th className="p-4 text-left">
                     Actions
                   </th>
 
                 </tr>
-
               </thead>
 
               <tbody>
 
-                {products.map((product) => (
-
-                  <tr
-                    key={product.id}
-                    className="border-t"
-                  >
-
-                    <td className="p-4">
-                      {product.id}
+                {products.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan="5"
+                      className="p-6 text-center text-gray-500"
+                    >
+                      No products found.
                     </td>
-
-                    <td className="p-4 font-medium">
-                      {product.name}
-                    </td>
-
-                    <td className="p-4">
-                      {product.category}
-                    </td>
-
-                    <td className="p-4">
-                      ₹
-                      {Number(
-                        product.price
-                      ).toLocaleString()}
-                    </td>
-
-                    <td className="p-4">
-
-                      <div className="flex gap-2">
-
-                        <button
-                          onClick={() =>
-                            handleEdit(product)
-                          }
-                          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                        >
-                          Edit
-                        </button>
-
-                        <button
-                          onClick={() =>
-                            handleDelete(product.id)
-                          }
-                          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
-                        >
-                          Delete
-                        </button>
-
-                      </div>
-
-                    </td>
-
                   </tr>
+                ) : (
+                  products.map((product) => (
+                    <tr
+                      key={product.id}
+                      className="border-t"
+                    >
 
-                ))}
+                      <td className="p-4">
+                        {product.id}
+                      </td>
+
+                      <td className="p-4 font-medium">
+                        {product.name}
+                      </td>
+
+                      <td className="p-4">
+                        {product.category}
+                      </td>
+
+                      <td className="p-4">
+                        ₹
+                        {Number(
+                          product.price
+                        ).toLocaleString("en-IN")}
+                      </td>
+
+                      <td className="p-4">
+
+                        <div className="flex flex-wrap gap-2">
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleEdit(product)
+                            }
+                            className="rounded-lg bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleDelete(product.id)
+                            }
+                            className="rounded-lg bg-red-600 px-4 py-2 text-white transition hover:bg-red-700"
+                          >
+                            Delete
+                          </button>
+
+                        </div>
+
+                      </td>
+
+                    </tr>
+                  ))
+                )}
 
               </tbody>
 
