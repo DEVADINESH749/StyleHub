@@ -18,6 +18,36 @@ function AdminDashboard() {
     image_url: "",
   });
 
+const handleLogout = () => {
+  localStorage.removeItem("access_token");
+  window.location.href = "/";
+};
+
+<button
+  type="button"
+  onClick={handleLogout}
+  className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:border-red-500 hover:text-red-600"
+>
+  Sign Out
+</button>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   const token = localStorage.getItem("access_token");
 
   const config = {
