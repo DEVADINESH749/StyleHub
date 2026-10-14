@@ -1,25 +1,17 @@
-const { chromium } = require("playwright");
-const fs = require("fs");
-const path = require("path");
+const CUSTOMER_EMAIL = process.env.STYLEHUB_CUSTOMER_EMAIL;
+const CUSTOMER_PASSWORD = process.env.STYLEHUB_CUSTOMER_PASSWORD;
+const ADMIN_EMAIL = process.env.STYLEHUB_ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.STYLEHUB_ADMIN_PASSWORD;
 
-const BASE_URL = "http://localhost:5173";
-
-const CUSTOMER_EMAIL = "customer@stylehub.com";
-const CUSTOMER_PASSWORD = "Customer@123";
-
-const ADMIN_EMAIL = "deva@example.com";
-const ADMIN_PASSWORD = "Test@123";
-
-// This script runs from:
-// C:\Users\devac\Desktop\StyleHub\frontend
-//
-// So ../screenshots means:
-// C:\Users\devac\Desktop\StyleHub\screenshots
-
-const screenshotDir = path.resolve(__dirname, "../screenshots");
-
-if (!fs.existsSync(screenshotDir)) {
-  fs.mkdirSync(screenshotDir, { recursive: true });
+if (
+  !CUSTOMER_EMAIL ||
+  !CUSTOMER_PASSWORD ||
+  !ADMIN_EMAIL ||
+  !ADMIN_PASSWORD
+) {
+  throw new Error(
+    "Screenshot credentials are missing. Set STYLEHUB_CUSTOMER_EMAIL, STYLEHUB_CUSTOMER_PASSWORD, STYLEHUB_ADMIN_EMAIL, and STYLEHUB_ADMIN_PASSWORD before running the script."
+  );
 }
 
 // ======================================================
