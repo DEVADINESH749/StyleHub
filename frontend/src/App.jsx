@@ -38,7 +38,6 @@ function App() {
       return;
     }
 
-    // Do not keep login screen blocked forever.
     checkUserRole(token);
   }, []);
 
@@ -144,7 +143,6 @@ function App() {
           setIsAdmin(false);
         }
       } catch (adminError) {
-        // 403 = normal customer
         console.log(
           "Admin check:",
           adminError.response?.status || adminError.message
@@ -567,35 +565,9 @@ function App() {
                 </div>
               )}
 
-              <div className="mt-8 rounded-xl bg-gray-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                  Demo Accounts
-                </p>
-
-                <p className="mt-2 text-sm font-medium text-gray-700">
-                  Customer
-                </p>
-
-                <p className="text-sm text-gray-700">
-                  customer@stylehub.com
-                </p>
-
-                <p className="text-sm text-gray-700">
-                  Customer@123
-                </p>
-
-                <p className="mt-3 text-sm font-medium text-gray-700">
-                  Admin
-                </p>
-
-                <p className="text-sm text-gray-700">
-                  deva@example.com
-                </p>
-
-                <p className="text-sm text-gray-700">
-                  Test@123
-                </p>
-              </div>
+              <p className="mt-8 text-center text-xs text-gray-500">
+                Sign in with your StyleHub account to continue.
+              </p>
 
             </div>
           </div>

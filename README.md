@@ -2,7 +2,7 @@
 
 
 
-**StyleHub is a full-stack fashion e-commerce web application built using FastAPI, SQLite, React, Tailwind CSS, JWT authentication, and Stripe test payments.**
+**StyleHub is a full-stack fashion e-commerce web application built using FastAPI, SQLite, React, Tailwind CSS, JWT authentication, and Stripe test-mode payments.**
 
 
 
@@ -12,7 +12,9 @@
 
 **### Customer**
 
-**- User registration and login**
+
+
+**- Customer login**
 
 **- JWT authentication**
 
@@ -36,9 +38,13 @@
 
 **- Responsive navigation**
 
+**- Customer logout**
+
 
 
 **### Admin**
+
+
 
 **- Admin authentication**
 
@@ -54,7 +60,13 @@
 
 **- View customer orders**
 
-**- Manage product information**
+**- Product management**
+
+**- Order monitoring**
+
+**- Admin logout**
+
+**- Dashboard statistics**
 
 
 
@@ -63,6 +75,8 @@
 
 
 **### Backend**
+
+
 
 **- Python**
 
@@ -78,9 +92,13 @@
 
 **- Stripe API**
 
+**- Stripe Webhooks**
+
 
 
 **### Frontend**
+
+
 
 **- React**
 
@@ -92,67 +110,23 @@
 
 **- Stripe React**
 
+**- Playwright**
 
 
-**## Project Structure**
+
+**## Database**
+
+
+
+**StyleHub uses SQLite as its database.**
+
+
+
+**Database file:**
 
 
 
 **```text**
 
-**StyleHub/**
-
-**│**
-
-**├── backend/**
-
-**│   ├── app/**
-
-**│   │   ├── main.py**
-
-**│   │   ├── models.py**
-
-**│   │   ├── schemas.py**
-
-**│   │   ├── database.py**
-
-**│   │   ├── security.py**
-
-**│   │   ├── auth.py**
-
-**│   │   ├── products.py**
-
-**│   │   ├── cart.py**
-
-**│   │   ├── orders.py**
-
-**│   │   └── admin.py**
-
-**│   │**
-
-**│   └── requirements.txt**
-
-**│**
-
-**├── frontend/**
-
-**│   ├── src/**
-
-**│   │   ├── components/**
-
-**│   │   ├── pages/**
-
-**│   │   ├── App.jsx**
-
-**│   │   ├── api.js**
-
-**│   │   └── main.jsx**
-
-**│   │**
-
-**│   └── package.json**
-
-**│**
-
-**└── README.md**
+**backend/stylehub.db**
 
